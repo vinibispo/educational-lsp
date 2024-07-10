@@ -19,8 +19,9 @@ func TestEncode(t *testing.T) {
 }
 
 func TestDecode(t *testing.T) {
-  expected := 16
-  actual, err := rpc.DecodeMessage([]byte("Content-Length: 16\r\n\r\n{\"testing\":true}"))
+  expected := 15
+  expectedMethod := "hi"
+  method, actual, err := rpc.DecodeMessage([]byte("Content-Length: 15\r\n\r\n{\"method\":\"hi\"}"))
 
   if err != nil {
     t.Fatalf("Unexpected error: %s", err)
@@ -28,5 +29,9 @@ func TestDecode(t *testing.T) {
 
   if actual != expected {
     t.Fatalf("Expected %d, got %d", expected, actual)
+  }
+
+  if method != expectedMethod {
+    t.Fatalf("Expected %s, got %s", expectedMethod, method)
   }
 }
