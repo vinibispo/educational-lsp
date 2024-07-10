@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"educationallsp/analysis"
 	"educationallsp/lsp"
 	"educationallsp/rpc"
 	"encoding/json"
@@ -15,6 +16,7 @@ func main() {
 	scanner := bufio.NewScanner(os.Stdin)
 	scanner.Split(rpc.Split)
 
+	state := analysis.NewState()
 	for scanner.Scan() {
 		msg := scanner.Bytes()
 		method, contents, err := rpc.DecodeMessage(msg)
@@ -22,11 +24,11 @@ func main() {
 			logger.Printf("error decoding message: %v", err)
 			continue
 		}
-		handleMessage(logger, method, contents)
+		handleMessage(logger, state, method, contents)
 	}
 }
 
-func handleMessage(logger *log.Logger, method string, contents []byte) {
+func handleMessage(logger *log.Logger, state analysis.State, method string, contents []byte) {
 	logger.Printf("Received msg with method: %s", method)
 
 	switch method {
@@ -53,6 +55,7 @@ func handleMessage(logger *log.Logger, method string, contents []byte) {
 		}
 
 		logger.Printf("Opened document: %s %s", notification.Params.TextDocument.URI, notification.Params.TextDocument.Text)
+		state.OpenDocument(notification.Params.TextDocument.URI, notification.Params.TextDocument.Text)
 	}
 }
 
