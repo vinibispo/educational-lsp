@@ -21,11 +21,11 @@ type BaseMessage struct {
   Method string `json:"method"`
 }
 
-func DecodeMessage(msg []byte) (string, int, error) {
+func DecodeMessage(msg []byte) (string, []byte, error) {
   header, content, found := bytes.Cut(msg, []byte{'\r', '\n', '\r', '\n'})
 
   if !found {
-    return "", 0, errors.New("Did not find separator")
+    return "", nil, errors.New("Did not find separator")
   }
 
   contentLengthBytes := header[len("Content-Length: "):]
@@ -33,12 +33,12 @@ func DecodeMessage(msg []byte) (string, int, error) {
 
   var baseMessage BaseMessage
   if err := json.Unmarshal(content[:contentLength], &baseMessage); err != nil {
-    return "", 0, err
+    return "", nil, err
   }
 
   if err != nil {
-    return "", 0, err
+    return "", nil, err
   }
 
-  return baseMessage.Method, contentLength, nil
+  return baseMessage.Method, content[:contentLength], nil
 }
