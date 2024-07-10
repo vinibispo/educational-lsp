@@ -11,7 +11,7 @@ import (
 )
 
 func main() {
-	logger := getLogger("educationallsp.txt")
+	logger := getLogger("/Users/vinibispo/projects/golang/educational-lsp/educationallsp.txt")
 
 	scanner := bufio.NewScanner(os.Stdin)
 	scanner.Split(rpc.Split)
@@ -52,10 +52,24 @@ func handleMessage(logger *log.Logger, state analysis.State, method string, cont
 
 		if err := json.Unmarshal(contents, &notification); err != nil {
 			logger.Printf("error unmarshalling didOpenTextDocument notification: %v", err)
+			return
 		}
 
-		logger.Printf("Opened document: %s %s", notification.Params.TextDocument.URI, notification.Params.TextDocument.Text)
+		logger.Printf("Opened document: %s", notification.Params.TextDocument.URI)
 		state.OpenDocument(notification.Params.TextDocument.URI, notification.Params.TextDocument.Text)
+	case "textDocument/didChange":
+		var notification lsp.TextDocumentDidChangeNotification
+
+		if err := json.Unmarshal(contents, &notification); err != nil {
+			logger.Printf("error unmarshalling didChangeTextDocument notification: %v", err)
+			return
+		}
+
+		logger.Printf("Changed document: %s", notification.Params.TextDocument.URI)
+
+		for _, change := range notification.Params.ContentChanges {
+			state.UpdateDocument(notification.Params.TextDocument.URI, change.Text)
+		}
 	}
 }
 
