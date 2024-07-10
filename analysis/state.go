@@ -1,6 +1,9 @@
 package analysis
 
-import "educationallsp/lsp"
+import (
+	"educationallsp/lsp"
+	"fmt"
+)
 
 type State struct {
 	// Map of file names to contents
@@ -22,13 +25,14 @@ func (s *State) UpdateDocument(uri, text string) {
 }
 
 func (s *State) Hover(id int, uri string, position lsp.Position) lsp.HoverResponse {
+	document := s.Documents[uri]
 	return lsp.HoverResponse{
 		Response: lsp.Response{
 			ID:  &id,
 			RPC: "2.0",
 		},
 		Result: lsp.HoverResult{
-			Contents: "Hello, from LSP",
+			Contents: fmt.Sprintf("File: %s, Character: %d", uri, len(document)),
 		},
 	}
 }
