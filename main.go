@@ -6,6 +6,7 @@ import (
 	"educationallsp/lsp"
 	"educationallsp/rpc"
 	"encoding/json"
+	"io"
 	"log"
 	"os"
 )
@@ -24,11 +25,11 @@ func main() {
 			logger.Printf("error decoding message: %v", err)
 			continue
 		}
-		handleMessage(logger, state, method, contents)
+		handleMessage(logger, os.Stdout, state, method, contents)
 	}
 }
 
-func handleMessage(logger *log.Logger, state analysis.State, method string, contents []byte) {
+func handleMessage(logger *log.Logger, writer io.Writer, state analysis.State, method string, contents []byte) {
 	logger.Printf("Received msg with method: %s", method)
 
 	switch method {
@@ -42,9 +43,7 @@ func handleMessage(logger *log.Logger, state analysis.State, method string, cont
 		logger.Printf("Connected to: %s %s", request.Params.ClientInfo.Name, request.Params.ClientInfo.Version)
 
 		response := lsp.NewInitializeResponse(request.ID)
-		reply := rpc.EncodeMessage(response)
-		writer := os.Stdout
-		writer.Write([]byte(reply))
+		writeResponse(writer, response)
 
 		logger.Print("Sent the reply")
 	case "textDocument/didOpen":
@@ -70,7 +69,24 @@ func handleMessage(logger *log.Logger, state analysis.State, method string, cont
 		for _, change := range notification.Params.ContentChanges {
 			state.UpdateDocument(notification.Params.TextDocument.URI, change.Text)
 		}
+
+	case "textDocument/hover":
+		var request lsp.HoverRequest
+
+		if err := json.Unmarshal(contents, &request); err != nil {
+			logger.Printf("error unmarshalling hover request: %v", err)
+			return
+		}
+
+		response := state.Hover(request.ID, request.Params.TextDocument.URI, request.Params.Position)
+
+		writeResponse(writer, response)
 	}
+}
+
+func writeResponse(writer io.Writer, msg any) {
+	reply := rpc.EncodeMessage(msg)
+	writer.Write([]byte(reply))
 }
 
 func getLogger(filename string) *log.Logger {
