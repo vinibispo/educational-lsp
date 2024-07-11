@@ -104,6 +104,26 @@ func (s *State) CodeAction(id int, uri string, range_ lsp.Range, context lsp.Cod
 	}
 }
 
+func (s *State) TextDocumentCompletion(id int, uri string) lsp.CompletionResponse {
+	items := []lsp.CompletionItem{
+		{
+			Label:         "Neovim (BTW)",
+			Detail:        "Very cool editor",
+			Documentation: "Fun to watch videos. Don't forget to like & subscribe to streamers using it:)",
+		},
+	}
+
+	response := lsp.CompletionResponse{
+		Response: lsp.Response{
+			RPC: "2.0",
+			ID:  &id,
+		},
+		Result: items,
+	}
+
+	return response
+}
+
 func LineRange(row, start, end int) lsp.Range {
 	return lsp.Range{
 		Start: lsp.Position{
